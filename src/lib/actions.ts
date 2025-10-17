@@ -59,7 +59,7 @@ export async function getRecommendations(
   try {
     const recommendations = await providePersonalizedRecommendations(input);
     return { success: true, data: recommendations };
-  } catch (error)
+  } catch (error) {
     console.error('Error generating recommendations:', error);
     return {
       success: false,
