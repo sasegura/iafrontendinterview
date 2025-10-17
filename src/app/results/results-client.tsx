@@ -24,6 +24,7 @@ export function ResultsClient() {
   const [isPending, startTransition] = useTransition();
   
   const [score, setScore] = useState<number>(0);
+  const [maxScore, setMaxScore] = useState<number>(0);
   const [topic, setTopic] = useState<string>('');
   const [difficulty, setDifficulty] = useState<string>('');
   const [history, setHistory] = useState<InterviewHistoryItem[]>([]);
@@ -37,10 +38,11 @@ export function ResultsClient() {
       try {
         const storedHistory = localStorage.getItem('interviewHistory');
         const urlScore = searchParams.get('score');
+        const urlMaxScore = searchParams.get('maxScore');
         const urlTopic = searchParams.get('topic');
         const urlDifficulty = searchParams.get('difficulty');
         
-        if (!storedHistory || !urlScore || !urlTopic || !urlDifficulty) {
+        if (!storedHistory || !urlScore || !urlTopic || !urlDifficulty || !urlMaxScore) {
           toast({ title: "Results not found", description: "No interview data available. Redirecting home.", variant: "destructive" });
           router.push('/');
           return;
@@ -49,12 +51,19 @@ export function ResultsClient() {
         const parsedHistory: InterviewHistoryItem[] = JSON.parse(storedHistory);
         setHistory(parsedHistory);
         setScore(parseInt(urlScore, 10));
+        setMaxScore(parseInt(urlMaxScore, 10));
         setTopic(urlTopic);
         setDifficulty(urlDifficulty);
         
         if (parsedHistory.length > 0) {
-          const lastLevel = parsedHistory[parsedHistory.length - 1].feedback.estimatedLevel;
-          setFinalLevel(lastLevel);
+          const levelCounts: Record<string, number> = parsedHistory.reduce((acc, item) => {
+              const level = item.feedback.estimatedLevel;
+              acc[level] = (acc[level] || 0) + 1;
+              return acc;
+          }, {} as Record<string, number>);
+
+          const finalLevel = Object.keys(levelCounts).reduce((a, b) => levelCounts[a] > levelCounts[b] ? a : b);
+          setFinalLevel(finalLevel);
 
           const intervieweeResponse = parsedHistory.map(item => `Q: ${item.question}\nA: ${item.answer}`).join('\n\n');
           const feedbackSummary = parsedHistory.map(item => `Feedback for "${item.question}": ${item.feedback.evaluation} Strengths: ${item.feedback.strengths}. Areas for improvement: ${item.feedback.areasForImprovement}.`).join('\n');
@@ -64,7 +73,7 @@ export function ResultsClient() {
               intervieweeResponse,
               feedback: feedbackSummary,
               topic: urlTopic,
-              difficultyLevel: lastLevel
+              difficultyLevel: finalLevel as 'Junior' | 'Mid' | 'Senior'
             });
             if (recsResponse.success && recsResponse.data) {
               setRecommendations(recsResponse.data);
@@ -100,7 +109,7 @@ export function ResultsClient() {
       <div className="mt-12 grid gap-6 md:grid-cols-3">
         <Card>
           <CardHeader><CardTitle>Final Score</CardTitle></CardHeader>
-          <CardContent><p className="text-5xl font-bold text-primary">{score}</p></CardContent>
+          <CardContent><p className="text-5xl font-bold text-primary">{score} <span className="text-3xl text-muted-foreground">/ {maxScore}</span></p></CardContent>
         </Card>
         <Card>
           <CardHeader><CardTitle>Estimated Level</CardTitle></CardHeader>
@@ -158,7 +167,7 @@ export function ResultsClient() {
                              option === item.correctAnswer ? "bg-green-100 dark:bg-green-900/30" : "",
                              option === item.answer && option !== item.correctAnswer ? "bg-red-100 dark:bg-red-900/30" : ""
                            )}>
-                             {option === item.correctAnswer ? <Check className="h-4 w-4 mr-2 text-green-600" /> : <X className="h-4 w-4 mr-2 text-red-600" />}
+                             {option === item.correctAnswer ? <Check className="h-4 w-4 mr-2 text-green-600" /> : (item.answer === option ? <X className="h-4 w-4 mr-2 text-red-600" /> : <div className="h-4 w-4 mr-2"/>)}
                              <span className={cn(option === item.answer && "font-bold")}>{option}</span>
                            </li>
                         ))}

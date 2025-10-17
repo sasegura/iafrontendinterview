@@ -17,6 +17,7 @@ import InterviewLoading from './loading';
 import { cn } from '@/lib/utils';
 
 const INTERVIEW_LENGTH = 10;
+const POINTS_PER_QUESTION = 10;
 
 export function InterviewClient() {
   const router = useRouter();
@@ -81,6 +82,9 @@ export function InterviewClient() {
     setIsLoading(true);
 
     startTransition(async () => {
+      const isCorrect = answer === currentQuestion.answer;
+      const points = isCorrect ? POINTS_PER_QUESTION : 0;
+      
       const response = await evaluateAnswer({
         topic: topic,
         question: currentQuestion.question,
@@ -88,12 +92,13 @@ export function InterviewClient() {
       });
 
       if (response.success && response.data) {
-        setFeedback(response.data);
-        setScore(prev => prev + response.data.points);
+        const evaluationWithPoints = { ...response.data, points };
+        setFeedback(evaluationWithPoints);
+        setScore(prev => prev + points);
         setHistory(prev => [...prev, { 
           question: currentQuestion.question, 
           answer: answer, 
-          feedback: response.data!,
+          feedback: evaluationWithPoints,
           options: currentQuestion.options,
           correctAnswer: currentQuestion.answer,
         }]);
@@ -103,6 +108,24 @@ export function InterviewClient() {
           description: response.error,
           variant: 'destructive',
         });
+        // Even if evaluation fails, we save the answer and move on
+         const fallbackFeedback: Evaluation = {
+            evaluation: 'Could not evaluate your answer.',
+            strengths: 'N/A',
+            areasForImprovement: 'N/A',
+            estimatedLevel: difficulty,
+            nextQuestion: "Let's move to the next question.",
+            points: points,
+        };
+        setFeedback(fallbackFeedback);
+        setScore(prev => prev + points);
+        setHistory(prev => [...prev, {
+            question: currentQuestion.question,
+            answer: answer,
+            feedback: fallbackFeedback,
+            options: currentQuestion.options,
+            correctAnswer: currentQuestion.answer,
+        }]);
       }
       setIsLoading(false);
     });
@@ -112,7 +135,11 @@ export function InterviewClient() {
     setFeedback(null);
     setSelectedAnswer(null);
     setIsAnswerSubmitted(false);
-    setCurrentQuestionIndex(prev => prev + 1);
+    if (currentQuestionIndex < INTERVIEW_LENGTH - 1) {
+      setCurrentQuestionIndex(prev => prev + 1);
+    } else {
+      handleFinishInterview();
+    }
   };
   
   const handleFinishInterview = () => {
@@ -120,8 +147,10 @@ export function InterviewClient() {
     try {
       localStorage.setItem('interviewHistory', JSON.stringify(history));
       
+      const maxScore = INTERVIEW_LENGTH * POINTS_PER_QUESTION;
       const params = new URLSearchParams({
         score: score.toString(),
+        maxScore: maxScore.toString(),
         topic: topic ?? 'Unknown',
         difficulty: difficulty ?? 'Unknown',
       });
