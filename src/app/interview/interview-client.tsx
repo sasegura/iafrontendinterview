@@ -15,7 +15,6 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2, ArrowRight, CheckCircle, XCircle, BrainCircuit, Star, Trophy, Lightbulb } from 'lucide-react';
 import InterviewLoading from './loading';
 import FeedbackLoading from './feedback-loading';
-import { cn } from '@/lib/utils';
 
 const INTERVIEW_LENGTH = 10;
 const POINTS_PER_QUESTION = 10;
@@ -64,7 +63,7 @@ export function InterviewClient() {
     setFeedback(null);
     setSelectedAnswer(null);
     setIsAnswerSubmitted(false);
-    setIsLoading(false);
+    setIsLoading(true);
     setIsInitializing(true);
 
     startTransition(async () => {
@@ -80,6 +79,7 @@ export function InterviewClient() {
         router.push('/');
       }
       setIsInitializing(false);
+      setIsLoading(false);
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -233,7 +233,7 @@ export function InterviewClient() {
 
         {/* Main Content */}
         <div>
-          {feedback || isAnswerSubmitted ? (
+          {feedback || (isAnswerSubmitted && isLoading) ? (
             isLoading ? <FeedbackLoading /> : (
               // Feedback View
               <div

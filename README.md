@@ -1,24 +1,24 @@
 # Front-End Interview Ace
 
-## Descripción
+## Description
 
-**Front-End Interview Ace** es un entrenador de entrevistas personal impulsado por IA, diseñado para ayudar a los desarrolladores de front-end a prepararse para sus entrevistas técnicas. La aplicación simula una entrevista real, haciendo preguntas, evaluando las respuestas del usuario y proporcionando feedback constructivo para ayudarles a mejorar sus habilidades y conseguir el trabajo de sus sueños.
+**Front-End Interview Ace** is a personal AI-powered interview coach designed to help front-end developers prepare for their technical interviews. The application simulates a real interview by asking questions, evaluating user responses, and providing constructive feedback to help them improve their skills and land their dream job.
 
-## Características Principales
+## Key Features
 
-- **Entrevistas Simuladas:** Sesiones de práctica con preguntas de opción múltiple sobre diversas tecnologías de front-end.
-- **Niveles de Dificultad:** Preguntas adaptadas para niveles Junior, Mid y Senior.
-- **Evaluación con IA:** Feedback instantáneo sobre tus respuestas, destacando puntos fuertes y áreas de mejora.
-- **Recomendaciones Personalizadas:** Sugerencias de estudio generadas por IA basadas en tu rendimiento para que te centres en lo que más importa.
-- **Seguimiento del Progreso:** Revisa tu puntuación final y un historial completo de tus respuestas y el feedback recibido.
+- **Simulated Interviews:** Practice sessions with multiple-choice questions on various front-end technologies.
+- **Difficulty Levels:** Questions tailored for Junior, Mid, and Senior levels.
+- **AI Evaluation:** Instant feedback on your answers, highlighting strengths and areas for improvement.
+- **Personalized Recommendations:** AI-generated study suggestions based on your performance to help you focus on what matters most.
+- **Progress Tracking:** Review your final score and a complete history of your answers and the feedback received.
 
-## Tecnologías Utilizadas
+## Technologies Used
 
-Este proyecto está construido con una pila de tecnologías moderna y robusta:
+This project is built with a modern and robust tech stack:
 
-- **Framework:** [Next.js](https://nextjs.org/) (usando el App Router)
-- **Lenguaje:** [TypeScript](https://www.typescriptlang.org/)
+- **Framework:** [Next.js](https://nextjs.org/) (using the App Router)
+- **Language:** [TypeScript](https://www.typescriptlang.org/)
 - **UI:** [React](https://react.dev/)
-- **Componentes de UI:** [ShadCN UI](https://ui.shadcn.com/)
-- **Estilos:** [Tailwind CSS](https://tailwindcss.com/)
-- **Inteligencia Artificial:** [Google Gemini](https://deepmind.google/technologies/gemini/) a través de [Genkit](https://firebase.google.com/docs/genkit)
+- **UI Components:** [ShadCN UI](https://ui.shadcn.com/)
+- **Styling:** [Tailwind CSS](https://tailwindcss.com/)
+- **Artificial Intelligence:** [Google Gemini](https://deepmind.google/technologies/gemini/) via [Genkit](https://firebase.google.com/docs/genkit)

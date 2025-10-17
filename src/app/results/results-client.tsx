@@ -93,7 +93,7 @@ export function ResultsClient() {
       }
     }
     loadResults();
-  }, []); // Run once on mount
+  }, [router, searchParams, toast]);
 
   if (isLoading) {
     return <ResultsLoading />;
