@@ -3,7 +3,7 @@
 import { useState, useEffect, useTransition } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { FileText, Bot, BookOpen } from 'lucide-react';
+import { FileText, Bot, BookOpen, Check, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { InterviewHistoryItem, Recommendations } from '@/lib/definitions';
 import { getRecommendations } from '@/lib/actions';
@@ -15,6 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
 import ResultsLoading from './loading';
+import { cn } from '@/lib/utils';
 
 export function ResultsClient() {
   const router = useRouter();
@@ -147,11 +148,29 @@ export function ResultsClient() {
               <AccordionItem value={`item-${index}`} key={index}>
                 <AccordionTrigger className="text-lg font-semibold">Question {index + 1}: <span className="text-left font-normal ml-2">{item.question}</span></AccordionTrigger>
                 <AccordionContent className="space-y-4 pt-4">
-                  <Alert>
-                    <Bot className="h-4 w-4" />
-                    <AlertTitle>Your Answer</AlertTitle>
-                    <AlertDescription className="whitespace-pre-wrap">{item.answer}</AlertDescription>
-                  </Alert>
+                  {item.options ? (
+                    <div className="space-y-2">
+                      <h4 className="font-semibold">Your answer: <span className="font-normal">{item.answer}</span></h4>
+                      <ul className="space-y-1 text-sm">
+                        {item.options.map((option, i) => (
+                           <li key={i} className={cn(
+                             "flex items-center p-2 rounded-md",
+                             option === item.correctAnswer ? "bg-green-100 dark:bg-green-900/30" : "",
+                             option === item.answer && option !== item.correctAnswer ? "bg-red-100 dark:bg-red-900/30" : ""
+                           )}>
+                             {option === item.correctAnswer ? <Check className="h-4 w-4 mr-2 text-green-600" /> : <X className="h-4 w-4 mr-2 text-red-600" />}
+                             <span className={cn(option === item.answer && "font-bold")}>{option}</span>
+                           </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : (
+                    <Alert>
+                      <Bot className="h-4 w-4" />
+                      <AlertTitle>Your Answer</AlertTitle>
+                      <AlertDescription className="whitespace-pre-wrap">{item.answer}</AlertDescription>
+                    </Alert>
+                  )}
                   <Card>
                     <CardHeader><CardTitle className="text-base">Feedback</CardTitle></CardHeader>
                     <CardContent className="space-y-2 text-sm">

@@ -2,27 +2,19 @@
 
 import { useState, useEffect, useTransition } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useForm } from 'react-hook-form';
-import * as z from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
 
-import type { Difficulty, Topic, Evaluation, InterviewHistoryItem } from '@/lib/definitions';
+import type { Difficulty, Topic, Evaluation, InterviewHistoryItem, InitialQuestion } from '@/lib/definitions';
 import { getInitialQuestion, evaluateAnswer } from '@/lib/actions';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, ArrowRight, CheckCircle, XCircle, BrainCircuit, Star, Trophy, Lightbulb } from 'lucide-react';
 import InterviewLoading from './loading';
-
-const AnswerSchema = z.object({
-  answer: z.string().min(10, { message: 'Please provide a more detailed answer.' }),
-});
+import { cn } from '@/lib/utils';
 
 export function InterviewClient() {
   const router = useRouter();
@@ -33,17 +25,15 @@ export function InterviewClient() {
   const [topic, setTopic] = useState<Topic | null>(null);
   const [difficulty, setDifficulty] = useState<Difficulty | null>(null);
 
-  const [question, setQuestion] = useState<string>('');
+  const [currentQuestion, setCurrentQuestion] = useState<InitialQuestion | null>(null);
   const [history, setHistory] = useState<InterviewHistoryItem[]>([]);
   const [score, setScore] = useState(0);
   const [feedback, setFeedback] = useState<Evaluation | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isFinishing, setIsFinishing] = useState(false);
+  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
+  const [isAnswerSubmitted, setIsAnswerSubmitted] = useState(false);
 
-  const form = useForm<z.infer<typeof AnswerSchema>>({
-    resolver: zodResolver(AnswerSchema),
-    defaultValues: { answer: '' },
-  });
 
   useEffect(() => {
     const t = searchParams.get('topic') as Topic;
@@ -64,7 +54,7 @@ export function InterviewClient() {
     startTransition(async () => {
       const response = await getInitialQuestion({ techStack: t, difficultyLevel: d });
       if (response.success && response.data) {
-        setQuestion(response.data.question);
+        setCurrentQuestion(response.data);
       } else {
         toast({
           title: 'Error',
@@ -77,23 +67,30 @@ export function InterviewClient() {
     });
   }, [router, searchParams, toast]);
 
-  const onSubmit = (data: z.infer<typeof AnswerSchema>) => {
-    if (!topic || !difficulty) return;
+  const handleAnswerSubmit = (answer: string) => {
+    if (!topic || !difficulty || !currentQuestion) return;
     
+    setSelectedAnswer(answer);
+    setIsAnswerSubmitted(true);
     setIsLoading(true);
+
     startTransition(async () => {
       const response = await evaluateAnswer({
         topic: topic,
-        question: question,
-        userAnswer: data.answer,
+        question: currentQuestion.question,
+        userAnswer: answer,
       });
 
       if (response.success && response.data) {
         setFeedback(response.data);
         setScore(prev => prev + response.data.points);
-        setHistory(prev => [...prev, { question, answer: data.answer, feedback: response.data! }]);
-        setQuestion(response.data.nextQuestion);
-        form.reset();
+        setHistory(prev => [...prev, { 
+          question: currentQuestion.question, 
+          answer: answer, 
+          feedback: response.data!,
+          options: currentQuestion.options,
+          correctAnswer: currentQuestion.answer,
+        }]);
       } else {
         toast({
           title: 'Evaluation Error',
@@ -106,7 +103,25 @@ export function InterviewClient() {
   };
 
   const handleNextQuestion = () => {
+    if (!topic || !difficulty) return;
     setFeedback(null);
+    setSelectedAnswer(null);
+    setIsAnswerSubmitted(false);
+    setIsLoading(true);
+
+    startTransition(async () => {
+        const response = await getInitialQuestion({ techStack: topic, difficultyLevel: difficulty });
+        if (response.success && response.data) {
+            setCurrentQuestion(response.data);
+        } else {
+            toast({
+                title: 'Error',
+                description: response.error,
+                variant: 'destructive'
+            });
+        }
+        setIsLoading(false);
+    });
   };
   
   const handleFinishInterview = () => {
@@ -165,7 +180,7 @@ export function InterviewClient() {
 
         {/* Main Content */}
         <div>
-          {feedback ? (
+          {feedback || isAnswerSubmitted ? (
             // Feedback View
             <div
               key="feedback"
@@ -175,36 +190,45 @@ export function InterviewClient() {
                 <CardHeader>
                   <CardTitle className="font-headline text-2xl flex items-center gap-2">
                     <BrainCircuit className="text-primary"/>
-                    Feedback on Your Answer
+                    Feedback
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                    <Alert>
-                        <Lightbulb className="h-4 w-4" />
-                        <AlertTitle>Evaluation</AlertTitle>
-                        <AlertDescription>{feedback.evaluation}</AlertDescription>
-                    </Alert>
-
-                    <div className="grid md:grid-cols-2 gap-4">
-                        <Alert variant="default" className="border-green-500/50">
-                            <CheckCircle className="h-4 w-4 text-green-500"/>
-                            <AlertTitle className="text-green-600">Strengths</AlertTitle>
-                            <AlertDescription>{feedback.strengths}</AlertDescription>
+                    {feedback ? (
+                      <>
+                        <Alert>
+                            <Lightbulb className="h-4 w-4" />
+                            <AlertTitle>Evaluation</AlertTitle>
+                            <AlertDescription>{feedback.evaluation}</AlertDescription>
                         </Alert>
-                        <Alert variant="destructive">
-                            <XCircle className="h-4 w-4"/>
-                            <AlertTitle>Areas for Improvement</AlertTitle>
-                            <AlertDescription>{feedback.areasForImprovement}</AlertDescription>
-                        </Alert>
-                    </div>
 
-                    <div className="flex justify-between items-center bg-muted p-4 rounded-lg">
-                        <div className="flex items-center gap-2">
-                            <Star className="h-5 w-5 text-yellow-500"/>
-                            <span className="font-semibold">Estimated Level for this question:</span>
+                        <div className="grid md:grid-cols-2 gap-4">
+                            <Alert variant="default" className="border-green-500/50">
+                                <CheckCircle className="h-4 w-4 text-green-500"/>
+                                <AlertTitle className="text-green-600">Strengths</AlertTitle>
+                                <AlertDescription>{feedback.strengths}</AlertDescription>
+                            </Alert>
+                            <Alert variant="destructive">
+                                <XCircle className="h-4 w-4"/>
+                                <AlertTitle>Areas for Improvement</AlertTitle>
+                                <AlertDescription>{feedback.areasForImprovement}</AlertDescription>
+                            </Alert>
                         </div>
-                        <Badge variant="default" className="text-lg">{feedback.estimatedLevel}</Badge>
-                    </div>
+
+                        <div className="flex justify-between items-center bg-muted p-4 rounded-lg">
+                            <div className="flex items-center gap-2">
+                                <Star className="h-5 w-5 text-yellow-500"/>
+                                <span className="font-semibold">Estimated Level for this question:</span>
+                            </div>
+                            <Badge variant="default" className="text-lg">{feedback.estimatedLevel}</Badge>
+                        </div>
+                      </>
+                    ) : isLoading ? (
+                      <div className="flex items-center justify-center p-8">
+                        <Loader2 className="animate-spin h-8 w-8 text-primary" />
+                        <span className="ml-4">Evaluating...</span>
+                      </div>
+                    ): null}
 
                   <div className="flex flex-col sm:flex-row gap-4">
                     <Button onClick={handleNextQuestion} className="w-full sm:w-auto" disabled={isPending || isLoading}>
@@ -226,41 +250,31 @@ export function InterviewClient() {
               <Card>
                 <CardHeader>
                   <CardTitle className="font-headline text-2xl">Question {history.length + 1}</CardTitle>
-                  <CardDescription className="text-lg pt-2">{question}</CardDescription>
+                  <CardDescription className="text-lg pt-2">{currentQuestion?.question}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                      <FormField
-                        control={form.control}
-                        name="answer"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="sr-only">Your Answer</FormLabel>
-                            <FormControl>
-                              <Textarea
-                                {...field}
-                                placeholder="Type your detailed answer here..."
-                                className="min-h-[150px] text-base"
-                                disabled={isPending || isLoading}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <div className="flex justify-between">
-                        <Button type="submit" disabled={isPending || isLoading}>
-                          {(isPending || isLoading) ? <Loader2 className="animate-spin" /> : 'Submit Answer'}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {currentQuestion?.options.map((option, index) => (
+                      <Button
+                        key={index}
+                        variant="outline"
+                        size="lg"
+                        className="h-auto whitespace-normal justify-start text-left p-4"
+                        onClick={() => handleAnswerSubmit(option)}
+                        disabled={isPending || isLoading}
+                      >
+                        <span className="font-bold mr-2">{String.fromCharCode(65 + index)}.</span>
+                        {option}
+                      </Button>
+                    ))}
+                  </div>
+                  <div className="flex justify-end mt-6">
+                      {history.length > 0 && (
+                        <Button onClick={handleFinishInterview} variant="ghost" disabled={isPending || isFinishing || isLoading}>
+                          {isFinishing ? <Loader2 className="animate-spin" /> : 'Finish Now'}
                         </Button>
-                        {history.length > 0 && (
-                          <Button onClick={handleFinishInterview} variant="ghost" disabled={isPending || isFinishing || isLoading}>
-                            {isFinishing ? <Loader2 className="animate-spin" /> : 'Finish Now'}
-                          </Button>
-                        )}
-                      </div>
-                    </form>
-                  </Form>
+                      )}
+                  </div>
                 </CardContent>
               </Card>
             </div>

@@ -14,4 +14,6 @@ export interface InterviewHistoryItem {
   question: string;
   answer: string;
   feedback: Evaluation;
+  options?: string[];
+  correctAnswer?: string;
 }

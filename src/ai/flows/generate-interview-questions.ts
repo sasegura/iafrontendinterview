@@ -25,6 +25,8 @@ export type GenerateInterviewQuestionsInput = z.infer<
 
 const GenerateInterviewQuestionsOutputSchema = z.object({
   question: z.string().describe('The generated interview question.'),
+  options: z.array(z.string()).describe('An array of 4 possible answers (3 incorrect, 1 correct).'),
+  answer: z.string().describe('The correct answer from the options array.'),
 });
 export type GenerateInterviewQuestionsOutput = z.infer<
   typeof GenerateInterviewQuestionsOutputSchema
@@ -42,7 +44,7 @@ const prompt = ai.definePrompt({
   output: {schema: GenerateInterviewQuestionsOutputSchema},
   prompt: `You are an expert interviewer specializing in frontend development.
 
-  Generate an interview question based on the following tech stack and difficulty level.
+  Generate an interview question in a multiple-choice format based on the following tech stack and difficulty level. Provide 4 options, where one is the correct answer.
 
   Tech Stack: {{{techStack}}}
   Difficulty Level: {{{difficultyLevel}}}
