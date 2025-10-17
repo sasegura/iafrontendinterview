@@ -14,6 +14,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, ArrowRight, CheckCircle, XCircle, BrainCircuit, Star, Trophy, Lightbulb } from 'lucide-react';
 import InterviewLoading from './loading';
+import FeedbackLoading from './feedback-loading';
 import { cn } from '@/lib/utils';
 
 const INTERVIEW_LENGTH = 10;
@@ -199,7 +200,7 @@ export function InterviewClient() {
   };
 
 
-  if (isInitializing || !currentQuestion) {
+  if (isInitializing || (!currentQuestion && isLoading)) {
     return <InterviewLoading />;
   }
 
@@ -233,69 +234,66 @@ export function InterviewClient() {
         {/* Main Content */}
         <div>
           {feedback || isAnswerSubmitted ? (
-            // Feedback View
-            <div
-              key={`feedback-${history.length}`}
-              className="animate-in fade-in-0 zoom-in-95"
-            >
-              <Card className="bg-card/80 backdrop-blur-sm">
-                <CardHeader>
-                  <CardTitle className="font-headline text-2xl flex items-center gap-2">
-                    <BrainCircuit className="text-primary"/>
-                    Feedback
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                    {isLoading ? (
-                      <div className="flex items-center justify-center p-8">
-                        <Loader2 className="animate-spin h-8 w-8 text-primary" />
-                        <span className="ml-4">Evaluating...</span>
-                      </div>
-                    ): feedback ? (
-                      <>
-                        <Alert>
-                            <Lightbulb className="h-4 w-4" />
-                            <AlertTitle>Evaluation</AlertTitle>
-                            <AlertDescription>{feedback.evaluation}</AlertDescription>
-                        </Alert>
-
-                        <div className="grid md:grid-cols-2 gap-4">
-                            <Alert variant="default" className="border-green-500/50">
-                                <CheckCircle className="h-4 w-4 text-green-500"/>
-                                <AlertTitle className="text-green-600">Strengths</AlertTitle>
-                                <AlertDescription>{feedback.strengths}</AlertDescription>
-                            </Alert>
-                            <Alert variant="destructive">
-                                <XCircle className="h-4 w-4"/>
-                                <AlertTitle>Areas for Improvement</AlertTitle>
-                                <AlertDescription>{feedback.areasForImprovement}</AlertDescription>
-                            </Alert>
-                        </div>
-
-                        <div className="flex justify-between items-center bg-muted p-4 rounded-lg">
-                            <div className="flex items-center gap-2">
-                                <Star className="h-5 w-5 text-yellow-500"/>
-                                <span className="font-semibold">Estimated Level for this question:</span>
-                            </div>
-                            <Badge variant="default" className="text-lg">{feedback.estimatedLevel}</Badge>
-                        </div>
-                      </>
-                    ) : null}
-
-                  <div className="flex flex-col sm:flex-row gap-4">
-                    {history.length < INTERVIEW_LENGTH ? (
-                        <Button onClick={handleNextQuestion} className="w-full sm:w-auto" disabled={isPending || isLoading}>
-                            Next Question <ArrowRight className="ml-2 h-4 w-4" />
-                        </Button>
-                    ) : null}
-                     <Button onClick={handleFinishInterview} variant={history.length < INTERVIEW_LENGTH ? 'outline' : 'default'} className="w-full sm:w-auto" disabled={isPending || isFinishing || isLoading}>
-                      {isFinishing ? <Loader2 className="animate-spin" /> : 'Finish Interview'}
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          ) : (
+            isLoading ? <FeedbackLoading /> : (
+              // Feedback View
+              <div
+                key={`feedback-${history.length}`}
+                className="animate-in fade-in-0 zoom-in-95"
+              >
+                <Card className="bg-card/80 backdrop-blur-sm">
+                  <CardHeader>
+                    <CardTitle className="font-headline text-2xl flex items-center gap-2">
+                      <BrainCircuit className="text-primary"/>
+                      Feedback
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                      {feedback ? (
+                        <>
+                          <Alert>
+                              <Lightbulb className="h-4 w-4" />
+                              <AlertTitle>Evaluation</AlertTitle>
+                              <AlertDescription>{feedback.evaluation}</AlertDescription>
+                          </Alert>
+  
+                          <div className="grid md:grid-cols-2 gap-4">
+                              <Alert variant="default" className="border-green-500/50">
+                                  <CheckCircle className="h-4 w-4 text-green-500"/>
+                                  <AlertTitle className="text-green-600">Strengths</AlertTitle>
+                                  <AlertDescription>{feedback.strengths}</AlertDescription>
+                              </Alert>
+                              <Alert variant="destructive">
+                                  <XCircle className="h-4 w-4"/>
+                                  <AlertTitle>Areas for Improvement</AlertTitle>
+                                  <AlertDescription>{feedback.areasForImprovement}</AlertDescription>
+                              </Alert>
+                          </div>
+  
+                          <div className="flex justify-between items-center bg-muted p-4 rounded-lg">
+                              <div className="flex items-center gap-2">
+                                  <Star className="h-5 w-5 text-yellow-500"/>
+                                  <span className="font-semibold">Estimated Level for this question:</span>
+                              </div>
+                              <Badge variant="default" className="text-lg">{feedback.estimatedLevel}</Badge>
+                          </div>
+                        </>
+                      ) : null}
+  
+                    <div className="flex flex-col sm:flex-row gap-4">
+                      {history.length < INTERVIEW_LENGTH ? (
+                          <Button onClick={handleNextQuestion} className="w-full sm:w-auto" disabled={isPending || isLoading}>
+                              Next Question <ArrowRight className="ml-2 h-4 w-4" />
+                          </Button>
+                      ) : null}
+                       <Button onClick={handleFinishInterview} variant={history.length < INTERVIEW_LENGTH ? 'outline' : 'default'} className="w-full sm:w-auto" disabled={isPending || isFinishing || isLoading}>
+                        {isFinishing ? <Loader2 className="animate-spin" /> : 'Finish Interview'}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )
+          ) : currentQuestion ? (
             // Question View
             <div
               key={`question-${history.length}`}
@@ -330,7 +328,7 @@ export function InterviewClient() {
                 </CardContent>
               </Card>
             </div>
-          )}
+          ) : null}
         </div>
       </div>
     </div>
