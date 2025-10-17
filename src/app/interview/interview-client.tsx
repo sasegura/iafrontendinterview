@@ -172,9 +172,14 @@ export function InterviewClient() {
   const handleFinishInterview = () => {
     setIsFinishing(true);
     try {
+      if (history.length === 0) {
+        router.push('/');
+        return;
+      }
+      
       localStorage.setItem('interviewHistory', JSON.stringify(history));
       
-      const maxScore = INTERVIEW_LENGTH * POINTS_PER_QUESTION;
+      const maxScore = history.length * POINTS_PER_QUESTION;
       const params = new URLSearchParams({
         score: score.toString(),
         maxScore: maxScore.toString(),
@@ -282,11 +287,10 @@ export function InterviewClient() {
                         <Button onClick={handleNextQuestion} className="w-full sm:w-auto" disabled={isPending || isLoading}>
                             Next Question <ArrowRight className="ml-2 h-4 w-4" />
                         </Button>
-                    ) : (
-                       <Button onClick={handleFinishInterview} variant={"default"} className="w-full sm:w-auto" disabled={isPending || isFinishing || isLoading}>
-                        {isFinishing ? <Loader2 className="animate-spin" /> : 'Finish Interview'}
-                      </Button>
-                    )}
+                    ) : null}
+                     <Button onClick={handleFinishInterview} variant={history.length < INTERVIEW_LENGTH ? 'outline' : 'default'} className="w-full sm:w-auto" disabled={isPending || isFinishing || isLoading}>
+                      {isFinishing ? <Loader2 className="animate-spin" /> : 'Finish Interview'}
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
@@ -319,11 +323,9 @@ export function InterviewClient() {
                     ))}
                   </div>
                   <div className="flex justify-end mt-6">
-                      {history.length >= INTERVIEW_LENGTH && (
-                        <Button onClick={handleFinishInterview} variant="default" disabled={isPending || isFinishing || isLoading}>
-                          {isFinishing ? <Loader2 className="animate-spin" /> : 'Finish Interview'}
-                        </Button>
-                      )}
+                      <Button onClick={handleFinishInterview} variant="outline" disabled={isPending || isFinishing || isLoading}>
+                        {isFinishing ? <Loader2 className="animate-spin" /> : 'Finish Interview'}
+                      </Button>
                   </div>
                 </CardContent>
               </Card>
