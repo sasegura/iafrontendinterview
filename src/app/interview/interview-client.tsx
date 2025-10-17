@@ -50,27 +50,34 @@ export function InterviewClient() {
       router.push('/');
       return;
     }
+    
+    // Reset state for new interview
+    setCurrentQuestion(null);
+    setHistory([]);
+    setScore(0);
+    setFeedback(null);
+    setSelectedAnswer(null);
+    setIsAnswerSubmitted(false);
+
     setTopic(t);
     setDifficulty(d);
 
-    if (currentQuestion === null) {
-      setIsLoading(true);
-      startTransition(async () => {
-        const response = await getNextQuestion({ techStack: t, difficultyLevel: d, previousQuestions: [] });
-        if (response.success && response.data) {
-          setCurrentQuestion(response.data);
-        } else {
-          toast({
-            title: 'Error',
-            description: response.error,
-            variant: 'destructive',
-          });
-          router.push('/');
-        }
-        setIsLoading(false);
-      });
-    }
-  }, [router, searchParams, toast, currentQuestion]);
+    setIsLoading(true);
+    startTransition(async () => {
+      const response = await getNextQuestion({ techStack: t, difficultyLevel: d, previousQuestions: [] });
+      if (response.success && response.data) {
+        setCurrentQuestion(response.data);
+      } else {
+        toast({
+          title: 'Error',
+          description: response.error,
+          variant: 'destructive',
+        });
+        router.push('/');
+      }
+      setIsLoading(false);
+    });
+  }, [router, searchParams, toast]);
 
   const handleAnswerSubmit = (answer: string) => {
     if (!topic || !difficulty || !currentQuestion) return;
@@ -139,9 +146,7 @@ export function InterviewClient() {
     if (history.length < INTERVIEW_LENGTH) {
        startTransition(async () => {
         const previousQuestions = history.map(h => h.question);
-        if (currentQuestion) {
-            previousQuestions.push(currentQuestion.question);
-        }
+        
         const response = await getNextQuestion({ techStack: topic, difficultyLevel: difficulty, previousQuestions });
         if (response.success && response.data) {
           setCurrentQuestion(response.data);
@@ -184,6 +189,10 @@ export function InterviewClient() {
   };
 
 
+  if (isLoading && !currentQuestion) {
+    return <InterviewLoading />;
+  }
+  
   if (!currentQuestion) {
     return <InterviewLoading />;
   }
@@ -231,7 +240,12 @@ export function InterviewClient() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                    {feedback ? (
+                    {isLoading ? (
+                      <div className="flex items-center justify-center p-8">
+                        <Loader2 className="animate-spin h-8 w-8 text-primary" />
+                        <span className="ml-4">Evaluating...</span>
+                      </div>
+                    ): feedback ? (
                       <>
                         <Alert>
                             <Lightbulb className="h-4 w-4" />
@@ -260,22 +274,18 @@ export function InterviewClient() {
                             <Badge variant="default" className="text-lg">{feedback.estimatedLevel}</Badge>
                         </div>
                       </>
-                    ) : isLoading ? (
-                      <div className="flex items-center justify-center p-8">
-                        <Loader2 className="animate-spin h-8 w-8 text-primary" />
-                        <span className="ml-4">Evaluating...</span>
-                      </div>
-                    ): null}
+                    ) : null}
 
                   <div className="flex flex-col sm:flex-row gap-4">
                     {history.length < INTERVIEW_LENGTH ? (
                         <Button onClick={handleNextQuestion} className="w-full sm:w-auto" disabled={isPending || isLoading}>
                             Next Question <ArrowRight className="ml-2 h-4 w-4" />
                         </Button>
-                    ) : null}
-                    <Button onClick={handleFinishInterview} variant={history.length < INTERVIEW_LENGTH ? "outline" : "default"} className="w-full sm:w-auto" disabled={isPending || isFinishing || isLoading}>
-                      {isFinishing ? <Loader2 className="animate-spin" /> : 'Finish Interview'}
-                    </Button>
+                    ) : (
+                       <Button onClick={handleFinishInterview} variant={"default"} className="w-full sm:w-auto" disabled={isPending || isFinishing || isLoading}>
+                        {isFinishing ? <Loader2 className="animate-spin" /> : 'Finish Interview'}
+                      </Button>
+                    )}
                   </div>
                 </CardContent>
               </Card>
