@@ -11,7 +11,7 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
-const GenerateInterviewQuestionsInputSchema = z.object({
+export const GenerateInterviewQuestionsInputSchema = z.object({
   techStack: z
     .string()
     .describe('The tech stack for the interview questions (e.g., React, JavaScript).'),
@@ -24,7 +24,7 @@ export type GenerateInterviewQuestionsInput = z.infer<
   typeof GenerateInterviewQuestionsInputSchema
 >;
 
-const GenerateInterviewQuestionsOutputSchema = z.object({
+export const GenerateInterviewQuestionsOutputSchema = z.object({
   question: z.string().describe('The generated interview question.'),
   options: z.array(z.string()).describe('An array of 4 possible answers (3 incorrect, 1 correct).'),
   answer: z.string().describe('The correct answer from the options array.'),
