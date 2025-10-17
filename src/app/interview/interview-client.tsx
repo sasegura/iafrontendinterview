@@ -55,6 +55,11 @@ export function InterviewClient() {
       return;
     }
 
+    // Only reset and fetch if the topic or difficulty actually changes
+    if (t === topic && d === difficulty) {
+      return;
+    }
+
     setTopic(t);
     setDifficulty(d);
     
@@ -81,7 +86,7 @@ export function InterviewClient() {
       }
       setIsLoading(false);
     });
-  }, [searchParams, stableToast, stableRouter]);
+  }, [searchParams, stableToast, stableRouter, topic, difficulty]);
 
   const handleAnswerSubmit = (answer: string) => {
     if (!topic || !difficulty || !currentQuestion) return;
