@@ -33,7 +33,7 @@ export default function Home() {
                   </CardContent>
                 </Card>
               </div>
-              <div className="relative overflow-hidden rounded-xl shadow-2xl">
+              <div className="relative overflow-hidden rounded-xl shadow-2xl h-[400px] lg:h-[500px]">
                 {heroImage && (
                   <Image
                     alt={heroImage.description}
@@ -41,6 +41,8 @@ export default function Home() {
                     src={heroImage.imageUrl}
                     data-ai-hint={heroImage.imageHint}
                     fill
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    priority
                   />
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-background/50 to-transparent" />
