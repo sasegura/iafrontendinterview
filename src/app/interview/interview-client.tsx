@@ -38,25 +38,17 @@ export function InterviewClient() {
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [isAnswerSubmitted, setIsAnswerSubmitted] = useState(false);
 
-  const stableToast = useCallback(toast, []);
-  const stableRouter = useCallback(router, []);
-
   useEffect(() => {
     const t = searchParams.get('topic') as Topic;
     const d = searchParams.get('difficulty') as Difficulty;
     
     if (!t || !d) {
-      stableToast({
+      toast({
         title: 'Missing Parameters',
         description: 'Topic or difficulty not selected. Redirecting to home.',
         variant: 'destructive',
       });
-      stableRouter.push('/');
-      return;
-    }
-
-    // Only reset and fetch if the topic or difficulty actually changes
-    if (t === topic && d === difficulty) {
+      router.push('/');
       return;
     }
 
@@ -77,16 +69,17 @@ export function InterviewClient() {
       if (response.success && response.data) {
         setCurrentQuestion(response.data);
       } else {
-        stableToast({
+        toast({
           title: 'Error',
           description: response.error,
           variant: 'destructive',
         });
-        stableRouter.push('/');
+        router.push('/');
       }
       setIsLoading(false);
     });
-  }, [searchParams, stableToast, stableRouter, topic, difficulty]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleAnswerSubmit = (answer: string) => {
     if (!topic || !difficulty || !currentQuestion) return;
@@ -324,7 +317,7 @@ export function InterviewClient() {
                     ))}
                   </div>
                   <div className="flex justify-end mt-6">
-                      {history.length > 0 && (
+                      {history.length > 0 && history.length < INTERVIEW_LENGTH && (
                         <Button onClick={handleFinishInterview} variant="ghost" disabled={isPending || isFinishing || isLoading}>
                           {isFinishing ? <Loader2 className="animate-spin" /> : 'Finish Now'}
                         </Button>
