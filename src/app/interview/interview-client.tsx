@@ -16,6 +16,8 @@ import { Loader2, ArrowRight, CheckCircle, XCircle, BrainCircuit, Star, Trophy, 
 import InterviewLoading from './loading';
 import { cn } from '@/lib/utils';
 
+const INTERVIEW_LENGTH = 10;
+
 export function InterviewClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -152,7 +154,7 @@ export function InterviewClient() {
     return <InterviewLoading />;
   }
 
-  const progressValue = Math.min((history.length / 10) * 100, 100); // Assuming 10 questions per interview
+  const progressValue = Math.min((history.length / INTERVIEW_LENGTH) * 100, 100);
 
   return (
     <div className="container mx-auto max-w-4xl py-12 px-4 md:px-6">
@@ -175,7 +177,7 @@ export function InterviewClient() {
         {/* Progress Bar */}
         <div className="space-y-2">
             <Progress value={progressValue} className="w-full" />
-            <p className="text-sm text-muted-foreground">{history.length} of approx. 10 questions answered</p>
+            <p className="text-sm text-muted-foreground">{history.length} of {INTERVIEW_LENGTH} questions answered</p>
         </div>
 
 
@@ -232,10 +234,12 @@ export function InterviewClient() {
                     ): null}
 
                   <div className="flex flex-col sm:flex-row gap-4">
-                    <Button onClick={handleNextQuestion} className="w-full sm:w-auto" disabled={isPending || isLoading}>
-                      Next Question <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
-                    <Button onClick={handleFinishInterview} variant="outline" className="w-full sm:w-auto" disabled={isPending || isFinishing || isLoading}>
+                    {history.length < INTERVIEW_LENGTH ? (
+                        <Button onClick={handleNextQuestion} className="w-full sm:w-auto" disabled={isPending || isLoading}>
+                            Next Question <ArrowRight className="ml-2 h-4 w-4" />
+                        </Button>
+                    ) : null}
+                    <Button onClick={handleFinishInterview} variant={history.length < INTERVIEW_LENGTH ? "outline" : "default"} className="w-full sm:w-auto" disabled={isPending || isFinishing || isLoading}>
                       {isFinishing ? <Loader2 className="animate-spin" /> : 'Finish Interview'}
                     </Button>
                   </div>
