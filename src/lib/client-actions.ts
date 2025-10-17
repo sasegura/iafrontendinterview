@@ -118,17 +118,132 @@ export async function evaluateAnswer(
 ) {
   try {
     // Mock evaluation for static export
-    const isCorrect = input.userAnswer === input.question; // Simple mock logic
+    // For multiple choice questions, we need to determine if the answer is correct
+    // Since we don't have the correct answer in the input, we'll generate a mock evaluation
     
-    const mockEvaluation = {
-      evaluation: isCorrect ? 'Correct!' : 'Incorrect',
-      strengths: isCorrect ? ['Good understanding of the concept'] : ['Keep studying this topic'],
-      areasForImprovement: isCorrect ? ['Continue practicing advanced concepts'] : ['Review the fundamentals'],
-      score: isCorrect ? 1 : 0,
-      explanation: isCorrect 
-        ? 'You answered correctly! This shows good understanding of the concept.'
-        : 'The answer was incorrect. Consider reviewing the material and trying again.'
+    const mockEvaluations = {
+      'React': {
+        'Junior': {
+          correct: {
+            evaluation: 'Great job! You demonstrated a solid understanding of React fundamentals.',
+            strengths: 'You showed good knowledge of React concepts and hooks.',
+            areasForImprovement: 'Continue practicing with more complex React patterns and state management.',
+            estimatedLevel: 'Junior' as const,
+            nextQuestion: 'Let\'s move on to the next question about React components.',
+            points: 10
+          },
+          incorrect: {
+            evaluation: 'Not quite right, but that\'s okay! This is a learning opportunity.',
+            strengths: 'You\'re thinking about React concepts, which shows engagement.',
+            areasForImprovement: 'Review React fundamentals, especially hooks and component lifecycle.',
+            estimatedLevel: 'Junior' as const,
+            nextQuestion: 'Let\'s try another question to build your understanding.',
+            points: 0
+          }
+        },
+        'Mid': {
+          correct: {
+            evaluation: 'Excellent! You showed strong intermediate React knowledge.',
+            strengths: 'You understand React patterns and can apply them effectively.',
+            areasForImprovement: 'Focus on advanced patterns like custom hooks and performance optimization.',
+            estimatedLevel: 'Mid' as const,
+            nextQuestion: 'Great work! Let\'s continue with more advanced concepts.',
+            points: 10
+          },
+          incorrect: {
+            evaluation: 'This was a challenging question. Let\'s break it down.',
+            strengths: 'You\'re working through complex React concepts.',
+            areasForImprovement: 'Review React patterns, state management, and component architecture.',
+            estimatedLevel: 'Junior' as const,
+            nextQuestion: 'Let\'s try another question to strengthen your understanding.',
+            points: 0
+          }
+        },
+        'Senior': {
+          correct: {
+            evaluation: 'Outstanding! You demonstrated expert-level React knowledge.',
+            strengths: 'You have deep understanding of React internals and best practices.',
+            areasForImprovement: 'Consider exploring React ecosystem tools and advanced optimization techniques.',
+            estimatedLevel: 'Senior' as const,
+            nextQuestion: 'Excellent! Let\'s continue with more senior-level challenges.',
+            points: 10
+          },
+          incorrect: {
+            evaluation: 'This was a complex senior-level question. Let\'s analyze it together.',
+            strengths: 'You\'re tackling advanced React concepts.',
+            areasForImprovement: 'Review React internals, performance optimization, and advanced patterns.',
+            estimatedLevel: 'Mid' as const,
+            nextQuestion: 'Let\'s try another question to build your senior-level skills.',
+            points: 0
+          }
+        }
+      },
+      'JavaScript': {
+        'Junior': {
+          correct: {
+            evaluation: 'Perfect! You have a good grasp of JavaScript basics.',
+            strengths: 'You understand fundamental JavaScript concepts well.',
+            areasForImprovement: 'Continue practicing with arrays, objects, and functions.',
+            estimatedLevel: 'Junior' as const,
+            nextQuestion: 'Well done! Let\'s move to the next JavaScript question.',
+            points: 10
+          },
+          incorrect: {
+            evaluation: 'JavaScript can be tricky! Let\'s learn from this.',
+            strengths: 'You\'re engaging with JavaScript concepts.',
+            areasForImprovement: 'Review JavaScript fundamentals, especially variables, functions, and scope.',
+            estimatedLevel: 'Junior' as const,
+            nextQuestion: 'Let\'s try another question to strengthen your JavaScript skills.',
+            points: 0
+          }
+        },
+        'Mid': {
+          correct: {
+            evaluation: 'Excellent! You showed strong intermediate JavaScript skills.',
+            strengths: 'You understand JavaScript patterns and can apply them effectively.',
+            areasForImprovement: 'Focus on advanced concepts like closures, prototypes, and async programming.',
+            estimatedLevel: 'Mid' as const,
+            nextQuestion: 'Great work! Let\'s continue with more advanced JavaScript.',
+            points: 10
+          },
+          incorrect: {
+            evaluation: 'This was a challenging intermediate question. Let\'s work through it.',
+            strengths: 'You\'re tackling complex JavaScript concepts.',
+            areasForImprovement: 'Review JavaScript patterns, closures, and asynchronous programming.',
+            estimatedLevel: 'Junior' as const,
+            nextQuestion: 'Let\'s try another question to build your intermediate skills.',
+            points: 0
+          }
+        },
+        'Senior': {
+          correct: {
+            evaluation: 'Outstanding! You demonstrated expert-level JavaScript knowledge.',
+            strengths: 'You have deep understanding of JavaScript internals and advanced patterns.',
+            areasForImprovement: 'Consider exploring JavaScript engines and performance optimization.',
+            estimatedLevel: 'Senior' as const,
+            nextQuestion: 'Excellent! Let\'s continue with more senior-level challenges.',
+            points: 10
+          },
+          incorrect: {
+            evaluation: 'This was a complex senior-level question. Let\'s analyze it together.',
+            strengths: 'You\'re working through advanced JavaScript concepts.',
+            areasForImprovement: 'Review JavaScript internals, performance optimization, and advanced patterns.',
+            estimatedLevel: 'Mid' as const,
+            nextQuestion: 'Let\'s try another question to build your senior-level skills.',
+            points: 0
+          }
+        }
+      }
     };
+
+    // Get the appropriate evaluation based on topic and difficulty
+    const topicEvaluations = mockEvaluations[input.topic as keyof typeof mockEvaluations] || mockEvaluations['React'];
+    const difficultyEvaluations = topicEvaluations[input.difficultyLevel] || topicEvaluations['Junior'];
+    
+    // Randomly choose between correct and incorrect for demo purposes
+    // In a real app, this would be based on actual answer validation
+    const isCorrect = Math.random() > 0.3; // 70% chance of being "correct" for demo
+    const mockEvaluation = isCorrect ? difficultyEvaluations.correct : difficultyEvaluations.incorrect;
 
     return { success: true, data: mockEvaluation };
   } catch (error) {
