@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useTransition } from 'react';
+import { useState, useEffect, useTransition, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 import type { Difficulty, Topic, Evaluation, InterviewHistoryItem, InitialQuestion } from '@/lib/definitions';
@@ -38,46 +38,50 @@ export function InterviewClient() {
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [isAnswerSubmitted, setIsAnswerSubmitted] = useState(false);
 
+  const stableToast = useCallback(toast, []);
+  const stableRouter = useCallback(router, []);
+
   useEffect(() => {
     const t = searchParams.get('topic') as Topic;
     const d = searchParams.get('difficulty') as Difficulty;
+    
     if (!t || !d) {
-      toast({
+      stableToast({
         title: 'Missing Parameters',
         description: 'Topic or difficulty not selected. Redirecting to home.',
         variant: 'destructive',
       });
-      router.push('/');
+      stableRouter.push('/');
       return;
     }
+
+    setTopic(t);
+    setDifficulty(d);
     
-    // Reset state for new interview
+    // Reset all state for a new interview
     setCurrentQuestion(null);
     setHistory([]);
     setScore(0);
     setFeedback(null);
     setSelectedAnswer(null);
     setIsAnswerSubmitted(false);
-
-    setTopic(t);
-    setDifficulty(d);
-
     setIsLoading(true);
+
     startTransition(async () => {
       const response = await getNextQuestion({ techStack: t, difficultyLevel: d, previousQuestions: [] });
       if (response.success && response.data) {
         setCurrentQuestion(response.data);
       } else {
-        toast({
+        stableToast({
           title: 'Error',
           description: response.error,
           variant: 'destructive',
         });
-        router.push('/');
+        stableRouter.push('/');
       }
       setIsLoading(false);
     });
-  }, [router, searchParams, toast]);
+  }, [searchParams, stableToast, stableRouter]);
 
   const handleAnswerSubmit = (answer: string) => {
     if (!topic || !difficulty || !currentQuestion) return;
@@ -189,10 +193,6 @@ export function InterviewClient() {
   };
 
 
-  if (isLoading && !currentQuestion) {
-    return <InterviewLoading />;
-  }
-  
   if (!currentQuestion) {
     return <InterviewLoading />;
   }
