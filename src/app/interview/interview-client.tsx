@@ -143,6 +143,7 @@ export function InterviewClient() {
     if (!topic || !difficulty) return;
     
     setIsLoading(true);
+    setCurrentQuestion(null);
     setFeedback(null);
     setSelectedAnswer(null);
     setIsAnswerSubmitted(false);
@@ -193,7 +194,7 @@ export function InterviewClient() {
   };
 
 
-  if (!currentQuestion) {
+  if (isLoading || !currentQuestion) {
     return <InterviewLoading />;
   }
 
