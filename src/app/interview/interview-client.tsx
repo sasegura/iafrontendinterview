@@ -4,7 +4,7 @@ import { useState, useEffect, useTransition } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 import type { Difficulty, Topic, Evaluation, InterviewHistoryItem, InitialQuestion } from '@/lib/definitions';
-import { getInitialQuestion, getNextQuestion, evaluateAnswer } from '@/lib/actions';
+import { getFullInterview, evaluateAnswer } from '@/lib/actions';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,8 +26,10 @@ export function InterviewClient() {
 
   const [topic, setTopic] = useState<Topic | null>(null);
   const [difficulty, setDifficulty] = useState<Difficulty | null>(null);
+  
+  const [interviewQuestions, setInterviewQuestions] = useState<InitialQuestion[]>([]);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
 
-  const [currentQuestion, setCurrentQuestion] = useState<InitialQuestion | null>(null);
   const [history, setHistory] = useState<InterviewHistoryItem[]>([]);
   const [score, setScore] = useState(0);
   const [feedback, setFeedback] = useState<Evaluation | null>(null);
@@ -54,9 +56,9 @@ export function InterviewClient() {
 
     setIsLoading(true);
     startTransition(async () => {
-      const response = await getInitialQuestion({ techStack: t, difficultyLevel: d });
+      const response = await getFullInterview({ techStack: t, difficultyLevel: d });
       if (response.success && response.data) {
-        setCurrentQuestion(response.data);
+        setInterviewQuestions(response.data.questions);
       } else {
         toast({
           title: 'Error',
@@ -68,6 +70,8 @@ export function InterviewClient() {
       setIsLoading(false);
     });
   }, [router, searchParams, toast]);
+
+  const currentQuestion = interviewQuestions[currentQuestionIndex];
 
   const handleAnswerSubmit = (answer: string) => {
     if (!topic || !difficulty || !currentQuestion) return;
@@ -105,26 +109,10 @@ export function InterviewClient() {
   };
 
   const handleNextQuestion = () => {
-    if (!topic || !difficulty) return;
     setFeedback(null);
     setSelectedAnswer(null);
     setIsAnswerSubmitted(false);
-    setIsLoading(true);
-
-    startTransition(async () => {
-        const previousQuestions = history.map(h => h.question);
-        const response = await getNextQuestion({ techStack: topic, difficultyLevel: difficulty, previousQuestions });
-        if (response.success && response.data) {
-            setCurrentQuestion(response.data);
-        } else {
-            toast({
-                title: 'Error',
-                description: response.error,
-                variant: 'destructive'
-            });
-        }
-        setIsLoading(false);
-    });
+    setCurrentQuestionIndex(prev => prev + 1);
   };
   
   const handleFinishInterview = () => {
@@ -150,7 +138,7 @@ export function InterviewClient() {
   };
 
 
-  if (isLoading && history.length === 0) {
+  if (isLoading && history.length === 0 && interviewQuestions.length === 0) {
     return <InterviewLoading />;
   }
 
@@ -186,7 +174,7 @@ export function InterviewClient() {
           {feedback || isAnswerSubmitted ? (
             // Feedback View
             <div
-              key="feedback"
+              key={`feedback-${currentQuestionIndex}`}
               className="animate-in fade-in-0 zoom-in-95"
             >
               <Card className="bg-card/80 backdrop-blur-sm">
@@ -249,7 +237,7 @@ export function InterviewClient() {
           ) : (
             // Question View
             <div
-              key="question"
+              key={`question-${currentQuestionIndex}`}
               className="animate-in fade-in-0 zoom-in-95"
             >
               <Card>
