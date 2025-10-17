@@ -1,3 +1,10 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "hero-interview",
+      "description": "A person in a professional setting being interviewed",
+      "imageUrl": "https://picsum.photos/seed/10/1200/800",
+      "imageHint": "professional interview"
+    }
+  ]
 }
