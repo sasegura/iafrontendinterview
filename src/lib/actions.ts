@@ -26,6 +26,18 @@ export async function getInitialQuestion(
   }
 }
 
+export async function getNextQuestion(
+  input: GenerateInterviewQuestionsInput
+) {
+  try {
+    const question = await generateInterviewQuestions(input);
+    return { success: true, data: question };
+  } catch (error) {
+    console.error('Error generating next question:', error);
+    return { success: false, error: 'Failed to generate next question.' };
+  }
+}
+
 export async function evaluateAnswer(
   input: Omit<EvaluateUserResponseInput, 'interviewPrompt'>
 ) {
@@ -47,7 +59,7 @@ export async function getRecommendations(
   try {
     const recommendations = await providePersonalizedRecommendations(input);
     return { success: true, data: recommendations };
-  } catch (error) {
+  } catch (error)
     console.error('Error generating recommendations:', error);
     return {
       success: false,

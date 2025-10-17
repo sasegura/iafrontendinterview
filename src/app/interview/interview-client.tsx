@@ -4,7 +4,7 @@ import { useState, useEffect, useTransition } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 import type { Difficulty, Topic, Evaluation, InterviewHistoryItem, InitialQuestion } from '@/lib/definitions';
-import { getInitialQuestion, evaluateAnswer } from '@/lib/actions';
+import { getInitialQuestion, getNextQuestion, evaluateAnswer } from '@/lib/actions';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -110,7 +110,8 @@ export function InterviewClient() {
     setIsLoading(true);
 
     startTransition(async () => {
-        const response = await getInitialQuestion({ techStack: topic, difficultyLevel: difficulty });
+        const previousQuestions = history.map(h => h.question);
+        const response = await getNextQuestion({ techStack: topic, difficultyLevel: difficulty, previousQuestions });
         if (response.success && response.data) {
             setCurrentQuestion(response.data);
         } else {
