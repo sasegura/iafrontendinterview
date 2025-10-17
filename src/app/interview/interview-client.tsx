@@ -4,7 +4,7 @@ import { useState, useEffect, useTransition } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 import type { Difficulty, Topic, Evaluation, InterviewHistoryItem, InitialQuestion } from '@/lib/definitions';
-import { getFullInterview, evaluateAnswer } from '@/lib/actions';
+import { getNextQuestion, evaluateAnswer } from '@/lib/actions';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -28,17 +28,15 @@ export function InterviewClient() {
   const [topic, setTopic] = useState<Topic | null>(null);
   const [difficulty, setDifficulty] = useState<Difficulty | null>(null);
   
-  const [interviewQuestions, setInterviewQuestions] = useState<InitialQuestion[]>([]);
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-
+  const [currentQuestion, setCurrentQuestion] = useState<InitialQuestion | null>(null);
   const [history, setHistory] = useState<InterviewHistoryItem[]>([]);
+  
   const [score, setScore] = useState(0);
   const [feedback, setFeedback] = useState<Evaluation | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isFinishing, setIsFinishing] = useState(false);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [isAnswerSubmitted, setIsAnswerSubmitted] = useState(false);
-
 
   useEffect(() => {
     const t = searchParams.get('topic') as Topic;
@@ -55,24 +53,24 @@ export function InterviewClient() {
     setTopic(t);
     setDifficulty(d);
 
-    setIsLoading(true);
-    startTransition(async () => {
-      const response = await getFullInterview({ techStack: t, difficultyLevel: d });
-      if (response.success && response.data) {
-        setInterviewQuestions(response.data.questions);
-      } else {
-        toast({
-          title: 'Error',
-          description: response.error,
-          variant: 'destructive',
-        });
-        router.push('/');
-      }
-      setIsLoading(false);
-    });
-  }, [router, searchParams, toast]);
-
-  const currentQuestion = interviewQuestions[currentQuestionIndex];
+    if (currentQuestion === null) {
+      setIsLoading(true);
+      startTransition(async () => {
+        const response = await getNextQuestion({ techStack: t, difficultyLevel: d, previousQuestions: [] });
+        if (response.success && response.data) {
+          setCurrentQuestion(response.data);
+        } else {
+          toast({
+            title: 'Error',
+            description: response.error,
+            variant: 'destructive',
+          });
+          router.push('/');
+        }
+        setIsLoading(false);
+      });
+    }
+  }, [router, searchParams, toast, currentQuestion]);
 
   const handleAnswerSubmit = (answer: string) => {
     if (!topic || !difficulty || !currentQuestion) return;
@@ -108,7 +106,6 @@ export function InterviewClient() {
           description: response.error,
           variant: 'destructive',
         });
-        // Even if evaluation fails, we save the answer and move on
          const fallbackFeedback: Evaluation = {
             evaluation: 'Could not evaluate your answer.',
             strengths: 'N/A',
@@ -132,11 +129,31 @@ export function InterviewClient() {
   };
 
   const handleNextQuestion = () => {
+    if (!topic || !difficulty) return;
+    
+    setIsLoading(true);
     setFeedback(null);
     setSelectedAnswer(null);
     setIsAnswerSubmitted(false);
-    if (currentQuestionIndex < INTERVIEW_LENGTH - 1) {
-      setCurrentQuestionIndex(prev => prev + 1);
+
+    if (history.length < INTERVIEW_LENGTH) {
+       startTransition(async () => {
+        const previousQuestions = history.map(h => h.question);
+        if (currentQuestion) {
+            previousQuestions.push(currentQuestion.question);
+        }
+        const response = await getNextQuestion({ techStack: topic, difficultyLevel: difficulty, previousQuestions });
+        if (response.success && response.data) {
+          setCurrentQuestion(response.data);
+        } else {
+          toast({
+            title: 'Error',
+            description: response.error,
+            variant: 'destructive',
+          });
+        }
+        setIsLoading(false);
+      });
     } else {
       handleFinishInterview();
     }
@@ -167,7 +184,7 @@ export function InterviewClient() {
   };
 
 
-  if (isLoading && history.length === 0 && interviewQuestions.length === 0) {
+  if (!currentQuestion) {
     return <InterviewLoading />;
   }
 
@@ -203,7 +220,7 @@ export function InterviewClient() {
           {feedback || isAnswerSubmitted ? (
             // Feedback View
             <div
-              key={`feedback-${currentQuestionIndex}`}
+              key={`feedback-${history.length}`}
               className="animate-in fade-in-0 zoom-in-95"
             >
               <Card className="bg-card/80 backdrop-blur-sm">
@@ -266,7 +283,7 @@ export function InterviewClient() {
           ) : (
             // Question View
             <div
-              key={`question-${currentQuestionIndex}`}
+              key={`question-${history.length}`}
               className="animate-in fade-in-0 zoom-in-95"
             >
               <Card>

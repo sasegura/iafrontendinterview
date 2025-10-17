@@ -13,35 +13,10 @@ import {
   type ProvidePersonalizedRecommendationsInput,
 } from '@/ai/flows/provide-personalized-recommendations';
 import { interviewPrompt } from './prompts';
-import { generateFullInterview } from '@/ai/flows/generate-full-interview';
-import type { Difficulty, Topic } from './definitions';
 
-export async function getFullInterview(input: {
-  techStack: Topic;
-  difficultyLevel: Difficulty;
-}) {
-  try {
-    const questions = await generateFullInterview(input);
-    return { success: true, data: questions };
-  } catch (error) {
-    console.error('Error generating full interview:', error);
-    return { success: false, error: 'Failed to generate interview questions.' };
-  }
-}
-
-export async function getInitialQuestion(
+export async function getNextQuestion(
   input: GenerateInterviewQuestionsInput
 ) {
-  try {
-    const question = await generateInterviewQuestions(input);
-    return { success: true, data: question };
-  } catch (error) {
-    console.error('Error generating initial question:', error);
-    return { success: false, error: 'Failed to generate initial question.' };
-  }
-}
-
-export async function getNextQuestion(input: GenerateInterviewQuestionsInput) {
   try {
     const question = await generateInterviewQuestions(input);
     return { success: true, data: question };
