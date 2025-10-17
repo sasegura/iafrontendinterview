@@ -33,7 +33,8 @@ export function InterviewClient() {
   
   const [score, setScore] = useState(0);
   const [feedback, setFeedback] = useState<Evaluation | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(true);
   const [isFinishing, setIsFinishing] = useState(false);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [isAnswerSubmitted, setIsAnswerSubmitted] = useState(false);
@@ -62,7 +63,8 @@ export function InterviewClient() {
     setFeedback(null);
     setSelectedAnswer(null);
     setIsAnswerSubmitted(false);
-    setIsLoading(true);
+    setIsLoading(false);
+    setIsInitializing(true);
 
     startTransition(async () => {
       const response = await getNextQuestion({ techStack: t, difficultyLevel: d, previousQuestions: [] });
@@ -76,7 +78,7 @@ export function InterviewClient() {
         });
         router.push('/');
       }
-      setIsLoading(false);
+      setIsInitializing(false);
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -192,7 +194,7 @@ export function InterviewClient() {
   };
 
 
-  if (isLoading || !currentQuestion) {
+  if (isInitializing || !currentQuestion) {
     return <InterviewLoading />;
   }
 
@@ -317,9 +319,9 @@ export function InterviewClient() {
                     ))}
                   </div>
                   <div className="flex justify-end mt-6">
-                      {history.length > 0 && history.length < INTERVIEW_LENGTH && (
-                        <Button onClick={handleFinishInterview} variant="ghost" disabled={isPending || isFinishing || isLoading}>
-                          {isFinishing ? <Loader2 className="animate-spin" /> : 'Finish Now'}
+                      {history.length >= INTERVIEW_LENGTH && (
+                        <Button onClick={handleFinishInterview} variant="default" disabled={isPending || isFinishing || isLoading}>
+                          {isFinishing ? <Loader2 className="animate-spin" /> : 'Finish Interview'}
                         </Button>
                       )}
                   </div>
