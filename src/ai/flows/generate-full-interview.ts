@@ -12,13 +12,13 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import {
   generateInterviewQuestions,
-  GenerateInterviewQuestionsOutputSchema,
-  GenerateInterviewQuestionsInputSchema,
 } from './generate-interview-questions';
+
+import type { GenerateInterviewQuestionsOutput } from './generate-interview-questions';
 
 const INTERVIEW_LENGTH = 10;
 
-export const GenerateFullInterviewInputSchema = z.object({
+const GenerateFullInterviewInputSchema = z.object({
   techStack: z
     .string()
     .describe('The tech stack for the interview questions (e.g., React, JavaScript).'),
@@ -27,9 +27,13 @@ export const GenerateFullInterviewInputSchema = z.object({
     .describe('The difficulty level of the interview questions.'),
 });
 
-export const GenerateFullInterviewOutputSchema = z.object({
+const GenerateFullInterviewOutputSchema = z.object({
   questions: z
-    .array(GenerateInterviewQuestionsOutputSchema)
+    .array(z.object({
+      question: z.string().describe('The generated interview question.'),
+      options: z.array(z.string()).describe('An array of 4 possible answers (3 incorrect, 1 correct).'),
+      answer: z.string().describe('The correct answer from the options array.'),
+    }))
     .describe('An array of 10 generated interview questions.'),
 });
 
@@ -53,7 +57,7 @@ const generateFullInterviewFlow = ai.defineFlow(
     outputSchema: GenerateFullInterviewOutputSchema,
   },
   async (input) => {
-    const questions = [];
+    const questions: GenerateInterviewQuestionsOutput[] = [];
     const previousQuestions: string[] = [];
 
     for (let i = 0; i < INTERVIEW_LENGTH; i++) {
